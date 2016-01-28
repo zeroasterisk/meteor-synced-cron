@@ -124,9 +124,9 @@ Meteor.startup(function() {
   var minTTL = 300;
 
   // Use UTC or localtime for evaluating schedules
-  if (options.timezone === 'utc')
+  if (options.timezone === 'utc') {
     Later.date.UTC();
-  else if (options.timezone === 'localtime') {
+  } else if (options.timezone === 'localtime') {
     Later.date.localTime();
   } else if (typeof options.timezone === 'function') {
     Later.date.timezone(options.timezone.apply(options))
@@ -141,11 +141,12 @@ Meteor.startup(function() {
   SyncedCron._collection._ensureIndex({intendedAt: 1, name: 1}, {unique: true});
 
   if (options.collectionTTL) {
-    if (options.collectionTTL > minTTL)
+    if (options.collectionTTL > minTTL) {
       SyncedCron._collection._ensureIndex({startedAt: 1 },
         { expireAfterSeconds: options.collectionTTL });
-    else
+    } else {
       log.warn('Not going to use a TTL that is shorter than:' + minTTL);
+    }
   }
 });
 
@@ -157,7 +158,7 @@ var scheduleEntry = function(entry) {
   SyncedCron._setTimezone(entry.timezone, entry);
   var schedule = entry.schedule.call(entry.context, Later.parse);
   var scheduleOffset = entry.scheduleOffset || 0;
-  entry._timer = SyncedCron._laterSetInterval(SyncedCron._entryWrapper(entry), schedule, scheduleOffset);
+  entry._timer = SyncedCron._laterSetInterval(SyncedCron._entryWrapper(entry), schedule, timezone, scheduleOffset);
 
   log.info('Scheduled "' + entry.name + '" next run @'
     + new Date(Later.schedule(schedule).next(1).getTime() + scheduleOffset));
@@ -205,6 +206,7 @@ SyncedCron.start = function() {
 SyncedCron.nextScheduledAtDate = function(jobName) {
   var entry = this._entries[jobName];
   var scheduleOffset = entry.scheduleOffset || 0;
+
   if (entry)
     this._setTimezone(entry.timezone, entry);
   return new Date(Later.schedule(entry.schedule(Later.parse)).next(1).getTime() + scheduleOffset);
@@ -245,12 +247,12 @@ SyncedCron.stop = function() {
 }
 
 SyncedCron._setTimezone = function(timezone, entry) {
-  if (timezone === 'utc')
+  if (timezone === 'utc') {
     Later.date.UTC();
-  else if (timezone === 'localtime') {
+  } else if (timezone === 'localtime') {
     Later.date.localTime();
-  } else if (typeof timezone === 'function'){
-    Later.date.timezone(timezone.apply(entry.context))
+  } else if (typeof timezone === 'function') {
+    Later.date.timezone(timezone.apply(entry.context));
   } else if (typeof timezone === 'string') {
     Later.date.timezone(timezone);
   } else {
@@ -325,9 +327,9 @@ SyncedCron._reset = function() {
 //   between multiple, potentially laggy and unsynced machines
 
 // From: https://github.com/bunkat/later/blob/master/src/core/setinterval.js
-SyncedCron._laterSetInterval = function(fn, sched, scheduleOffset) {
+SyncedCron._laterSetInterval = function(fn, sched, timezone, scheduleOffset) {
 
-  var t = SyncedCron._laterSetTimeout(scheduleTimeout, sched, scheduleOffset),
+  var t = SyncedCron._laterSetTimeout(scheduleTimeout, sched, timezone, scheduleOffset),
       done = false;
 
   /**
@@ -337,7 +339,7 @@ SyncedCron._laterSetInterval = function(fn, sched, scheduleOffset) {
   function scheduleTimeout(intendedAt) {
     if (!done) {
       fn(intendedAt);
-      t = SyncedCron._laterSetTimeout(scheduleTimeout, sched, scheduleOffset);
+      t = SyncedCron._laterSetTimeout(scheduleTimeout, sched, timezone, scheduleOffset);
     }
   }
 
@@ -356,7 +358,7 @@ SyncedCron._laterSetInterval = function(fn, sched, scheduleOffset) {
 };
 
 // From: https://github.com/bunkat/later/blob/master/src/core/settimeout.js
-SyncedCron._laterSetTimeout = function(fn, sched, scheduleOffset) {
+SyncedCron._laterSetTimeout = function(fn, sched, timezone, scheduleOffset) {
 
   var s = Later.schedule(sched), t;
   scheduleTimeout();
@@ -367,6 +369,11 @@ SyncedCron._laterSetTimeout = function(fn, sched, scheduleOffset) {
   * attempting to schedule the timeout again.
   */
   function scheduleTimeout() {
+    // Guarantee that our timezone hasn't been changed by another job
+    if (timezone && typeof timezone === 'string') {
+      SyncedCron._setTimezone(timezone);
+    }
+
     var now = Date.now() - scheduleOffset,
         next = s.next(2, now),
         diff = next[0].getTime() - now,
