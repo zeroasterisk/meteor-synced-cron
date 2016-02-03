@@ -158,7 +158,7 @@ var scheduleEntry = function(entry) {
   SyncedCron._setTimezone(entry.timezone, entry);
   var schedule = entry.schedule.call(entry.context, Later.parse);
   var scheduleOffset = entry.scheduleOffset || 0;
-  entry._timer = SyncedCron._laterSetInterval(SyncedCron._entryWrapper(entry), schedule, timezone, scheduleOffset);
+  entry._timer = SyncedCron._laterSetInterval(SyncedCron._entryWrapper(entry), schedule, entry.timezone, scheduleOffset);
 
   log.info('Scheduled "' + entry.name + '" next run @'
     + new Date(Later.schedule(schedule).next(1).getTime() + scheduleOffset));
