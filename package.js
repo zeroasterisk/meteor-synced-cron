@@ -1,6 +1,6 @@
 Package.describe({
   summary: 'Fork of original w/ timezone support. Define and run scheduled jobs across multiple servers.',
-  version: '1.2.10',
+  version: '1.2.11',
   name: 'saucecode:timezoned-synced-cron',
   git: 'https://github.com/thesaucecode/meteor-synced-cron.git'
 });
