@@ -209,7 +209,8 @@ SyncedCron.nextScheduledAtDate = function(jobName) {
 
   if (entry)
     this._setTimezone(entry.timezone, entry);
-  return new Date(Later.schedule(entry.schedule(Later.parse)).next(1).getTime() + scheduleOffset);
+
+  return new Date(Later.schedule(entry.schedule.call(entry.context, Later.parse)).next(2).pop().getTime() + scheduleOffset);
 }
 
 // Remove and stop the entry referenced by jobName
