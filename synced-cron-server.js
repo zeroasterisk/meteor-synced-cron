@@ -204,13 +204,15 @@ SyncedCron.start = function() {
 
 // Return the next scheduled date of the first matching entry or undefined
 SyncedCron.nextScheduledAtDate = function(jobName) {
-  var entry = this._entries[jobName];
+  var entry = this._entries[jobName];  
+  
+  if (!entry)
+    return undefined;
+    
   var scheduleOffset = entry.scheduleOffset || 0;
-
-  if (entry)
-    this._setTimezone(entry.timezone, entry);
-
-  return new Date(Later.schedule(entry.schedule.call(entry.context, Later.parse)).next(2).pop().getTime() + scheduleOffset);
+  this._setTimezone(entry.timezone, entry);
+  
+  return new Date(Later.schedule(entry.schedule.call(entry.context, Later.parse)).next(1).getTime() + scheduleOffset);
 }
 
 // Remove and stop the entry referenced by jobName
