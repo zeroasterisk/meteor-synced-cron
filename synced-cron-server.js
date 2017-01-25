@@ -158,10 +158,14 @@ var scheduleEntry = function(entry) {
   SyncedCron._setTimezone(entry.timezone, entry);
   var schedule = entry.schedule.call(entry.context, Later.parse);
   var scheduleOffset = entry.scheduleOffset || 0;
-  entry._timer = SyncedCron._laterSetInterval(SyncedCron._entryWrapper(entry), schedule, entry.timezone, scheduleOffset);
+  var startedAt = entry.startedAt;  
+  entry._timer = SyncedCron._laterSetInterval(SyncedCron._entryWrapper(entry), schedule, entry.timezone, scheduleOffset, startedAt);
 
-  log.info('Scheduled "' + entry.name + '" next run @'
-    + new Date(Later.schedule(schedule).next(1).getTime() + scheduleOffset));
+  var nextDate = !!startedAt ?
+    new Date(Later.schedule(schedule).next(1, startedAt).getTime() + scheduleOffset) :
+    new Date(Later.schedule(schedule).next(1).getTime() + scheduleOffset);
+
+  log.info('Scheduled "' + entry.name + '" next run @' + nextDate);
 }
 
 // add a scheduled job
@@ -174,6 +178,10 @@ SyncedCron.add = function(entry) {
   check(entry.name, String);
   check(entry.schedule, Function);
   check(entry.job, Function);
+  
+  if (!!entry.startedAt)
+    check(entry.startedAt, Date);
+  
   entry.context = typeof entry.context === 'object' ? entry.context : {};
   entry.timezone = typeof entry.timezone === 'string' || typeof entry.timezone === 'function' ? entry.timezone : null;
 
@@ -212,7 +220,12 @@ SyncedCron.nextScheduledAtDate = function(jobName) {
   var scheduleOffset = entry.scheduleOffset || 0;
   this._setTimezone(entry.timezone, entry);
   
-  return new Date(Later.schedule(entry.schedule.call(entry.context, Later.parse)).next(1).getTime() + scheduleOffset);
+  var schedule = Later.schedule(entry.schedule.call(entry.context, Later.parse));
+  var startedAt = entry.startedAt;
+
+  return !!startedAt ?
+    new Date(schedule.next(1, startedAt).getTime() + scheduleOffset) :
+    new Date(schedule.next(1).getTime() + scheduleOffset);
 }
 
 // Remove and stop the entry referenced by jobName
@@ -330,9 +343,9 @@ SyncedCron._reset = function() {
 //   between multiple, potentially laggy and unsynced machines
 
 // From: https://github.com/bunkat/later/blob/master/src/core/setinterval.js
-SyncedCron._laterSetInterval = function(fn, sched, timezone, scheduleOffset) {
+SyncedCron._laterSetInterval = function(fn, sched, timezone, scheduleOffset, startedAt) {
 
-  var t = SyncedCron._laterSetTimeout(scheduleTimeout, sched, timezone, scheduleOffset),
+  var t = SyncedCron._laterSetTimeout(scheduleTimeout, sched, timezone, scheduleOffset, startedAt),
       done = false;
 
   /**
@@ -342,7 +355,7 @@ SyncedCron._laterSetInterval = function(fn, sched, timezone, scheduleOffset) {
   function scheduleTimeout(intendedAt) {
     if (!done) {
       fn(intendedAt);
-      t = SyncedCron._laterSetTimeout(scheduleTimeout, sched, timezone, scheduleOffset);
+      t = SyncedCron._laterSetTimeout(scheduleTimeout, sched, timezone, scheduleOffset, startedAt);
     }
   }
 
@@ -361,7 +374,7 @@ SyncedCron._laterSetInterval = function(fn, sched, timezone, scheduleOffset) {
 };
 
 // From: https://github.com/bunkat/later/blob/master/src/core/settimeout.js
-SyncedCron._laterSetTimeout = function(fn, sched, timezone, scheduleOffset) {
+SyncedCron._laterSetTimeout = function(fn, sched, timezone, scheduleOffset, startedAt) {
 
   var s = Later.schedule(sched), t;
   scheduleTimeout();
@@ -377,7 +390,7 @@ SyncedCron._laterSetTimeout = function(fn, sched, timezone, scheduleOffset) {
       SyncedCron._setTimezone(timezone);
     }
 
-    var now = Date.now() - scheduleOffset,
+    var now = (!!startedAt && startedAt.valueOf() > Date.now() ? startedAt.valueOf() : Date.now()) - scheduleOffset,
         next = s.next(2, now),
         diff = next[0].getTime() - now,
         intendedAt = next[0];
