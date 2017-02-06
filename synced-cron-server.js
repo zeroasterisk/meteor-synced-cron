@@ -389,9 +389,10 @@ SyncedCron._laterSetTimeout = function(fn, sched, timezone, scheduleOffset, star
     if (timezone && typeof timezone === 'string') {
       SyncedCron._setTimezone(timezone);
     }
-
-    var now = (!!startedAt && startedAt.valueOf() > Date.now() ? startedAt.valueOf() : Date.now()) - scheduleOffset,
-        next = s.next(2, now),
+    
+    var _startedAt = (!!startedAt && startedAt.valueOf() > Date.now() ? startedAt.valueOf() : Date.now()) - scheduleOffset,
+        now = Date.now(),
+        next = s.next(2, _startedAt),
         diff = next[0].getTime() - now,
         intendedAt = next[0];
 
