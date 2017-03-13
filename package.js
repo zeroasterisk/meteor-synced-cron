@@ -1,8 +1,8 @@
 Package.describe({
-  summary: 'Fork of original w/ timezone support. Define and run scheduled jobs across multiple servers.',
+  summary: 'Fork of percolate & saucecode. w/ updates, timezone, better errors. Define and run scheduled jobs across multiple servers.',
   version: '1.2.11',
-  name: 'saucecode:timezoned-synced-cron',
-  git: 'https://github.com/thesaucecode/meteor-synced-cron.git'
+  name: 'zeroasterisk:synced-cron',
+  git: 'https://github.com/zeroasterisk/meteor-synced-cron.git'
 });
 
 Npm.depends({later: '1.2.0', timezone:'1.0.6'});
@@ -15,6 +15,6 @@ Package.onUse(function(api) {
 });
 
 Package.onTest(function(api) {
-  api.use(['saucecode:timezoned-synced-cron', 'tinytest']);
+  api.use(['zeroasterisk:timezoned-synced-cron', 'tinytest']);
   api.addFiles('synced-cron-tests.js', ['server']);
 });

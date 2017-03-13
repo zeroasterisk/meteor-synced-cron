@@ -1,14 +1,14 @@
 {
   "dependencies": {
     "later": {
-      "version": "1.1.6",
-      "resolved": "https://registry.npmjs.org/later/-/later-1.1.6.tgz",
-      "from": "later@1.1.6"
+      "version": "1.2.0",
+      "resolved": "https://registry.npmjs.org/later/-/later-1.2.0.tgz",
+      "from": "later@1.2.0"
     },
     "timezone": {
-      "version": "0.0.41",
-      "resolved": "https://registry.npmjs.org/timezone/-/timezone-0.0.41.tgz",
-      "from": "timezone@0.0.41"
+      "version": "1.0.6",
+      "resolved": "https://registry.npmjs.org/timezone/-/timezone-1.0.6.tgz",
+      "from": "timezone@1.0.6"
     }
   }
 }

@@ -158,7 +158,7 @@ var scheduleEntry = function(entry) {
   SyncedCron._setTimezone(entry.timezone, entry);
   var schedule = entry.schedule.call(entry.context, Later.parse);
   var scheduleOffset = entry.scheduleOffset || 0;
-  var startedAt = entry.startedAt;  
+  var startedAt = entry.startedAt;
   entry._timer = SyncedCron._laterSetInterval(SyncedCron._entryWrapper(entry), schedule, entry.timezone, scheduleOffset, startedAt);
 
   var nextDate = !!startedAt ?
@@ -178,10 +178,10 @@ SyncedCron.add = function(entry) {
   check(entry.name, String);
   check(entry.schedule, Function);
   check(entry.job, Function);
-  
+
   if (!!entry.startedAt)
     check(entry.startedAt, Date);
-  
+
   entry.context = typeof entry.context === 'object' ? entry.context : {};
   entry.timezone = typeof entry.timezone === 'string' || typeof entry.timezone === 'function' ? entry.timezone : null;
 
@@ -212,14 +212,14 @@ SyncedCron.start = function() {
 
 // Return the next scheduled date of the first matching entry or undefined
 SyncedCron.nextScheduledAtDate = function(jobName) {
-  var entry = this._entries[jobName];  
-  
+  var entry = this._entries[jobName];
+
   if (!entry)
     return undefined;
-    
+
   var scheduleOffset = entry.scheduleOffset || 0;
   this._setTimezone(entry.timezone, entry);
-  
+
   var schedule = Later.schedule(entry.schedule.call(entry.context, Later.parse));
   var startedAt = entry.startedAt;
 
@@ -299,7 +299,7 @@ SyncedCron._entryWrapper = function(entry) {
         log.info('Not running "' + entry.name + '" again.');
         return;
       }
-
+      log.error('Not running "' + entry.name + '" because insert threw error: ' + e.code + ':' + e.name);
       throw e;
     };
 
@@ -389,7 +389,7 @@ SyncedCron._laterSetTimeout = function(fn, sched, timezone, scheduleOffset, star
     if (timezone && typeof timezone === 'string') {
       SyncedCron._setTimezone(timezone);
     }
-    
+
     var _startedAt = (!!startedAt && startedAt.valueOf() > Date.now() ? startedAt.valueOf() : Date.now()) - scheduleOffset,
         now = Date.now(),
         next = s.next(2, _startedAt),
